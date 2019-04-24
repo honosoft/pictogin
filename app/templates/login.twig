@@ -1,0 +1,17 @@
+{% extends "authentication.twig" %}
+
+{% set action = 'login' %}
+{% set title = 'Log In' %}
+{% set imageMessage %}
+    <div class="ui">TODO: add appropriate message: Step {{ step }} / 3</div>
+{% endset %}
+
+
+{% block buttons %}
+    <div class="field">
+        <a class="ui fluid large teal button" href="{{ action }}">Not in selection</a>
+    </div>
+    <div class="field">
+        <div class="ui fluid large teal button" onclick="forgotPassword();">Forgot password</div>
+    </div>
+{% endblock buttons %}

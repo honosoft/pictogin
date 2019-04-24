@@ -1,0 +1,12 @@
+{% extends "default.twig" %}
+
+{% block content %}
+    <h1>Pictogin</h1>
+    {% if user %}
+        <div>This is the version when you are logged in. Thank you!</div>
+        <div>Make a delete my account...</div>
+    {% else %}
+        <div>Give some quick explanation and make a nice page explaining the concept.</div>
+        <div>Make a button to go directly to sign up</div>
+    {% endif %}
+{% endblock %}

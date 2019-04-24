@@ -1,0 +1,23 @@
+{
+    "name": "honosoft/pictogin",
+    "description": "A login using pictures instead of alphanumeric characters",
+    "type": "project",
+    "authors": [
+        {
+            "name": "sauleil",
+            "email": "sauleil@honosoft.com"
+        }
+    ],
+    "require": {
+        "twig/twig": "^2.6",
+        "slim/slim": "^3.12",
+        "slim/csrf": "^0.8.3",
+        "slim/twig-view": "^2.4",
+        "ramsey/uuid": "^3.8"
+    },
+    "autoload": {
+        "psr-4": {
+            "pictogin\\": "app/src/"
+        }
+    }
+}

@@ -1,0 +1,16 @@
+{% extends "authentication.twig" %}
+
+{% set action = '/signup' %}
+{% set title = 'Sign Up' %}
+{% set imageMessage %}
+    <div class="ui">Click on the most meaningful image for you. (Step {{ step }} / 3)</div>
+{% endset %}
+{% set emailMessage %}
+    <div class="ui">To register a new account, just follow the steps.</div>
+{% endset %}
+
+{% block buttons %}
+    <div class="field">
+        <a class="ui fluid large teal button" href="{{ action }}">More images</a>
+    </div>
+{% endblock buttons %}

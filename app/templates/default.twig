@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        {% block css_top %}
+            <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/semantic-ui/2.4.1/semantic.min.css" />
+            <link rel="stylesheet" href="/css/default.css" />
+        {% endblock %}
+
+        <title>pictogin</title>
+    </head>
+    <body>
+        <div id="header" class = ui center aligned segment>
+            {% block header %}
+            <div class="ui menu">
+                <a class="item active" href="/"><i class="book icon"></i> <strong>pictogin</strong></a>
+                <div class="right menu">
+                    {% if user %}
+                        <a class="item" href="/login"><i class="sign-out icon"></i> Log Out</a>
+                    {% else %}
+                        <a class="item" href="/login"><i class="sign-in icon"></i> Log In</a>
+                        <a class="item" href="/signup"><i class="user plus icon"></i> Sign Up</a>
+                    {% endif %}
+                </div>
+            </div>
+            {% endblock %}
+        </div>
+        <div id="content" class="ui main text segment content">
+            <div class="ui container main text">
+            {% block content %}{% endblock %}
+            </div>
+        </div>
+
+        <div id="footer" class="ui center aligned segment">
+            {% block footer %}
+                &copy; Copyright 2019 by HoNoSoFt</a>.
+            {% endblock %}
+        </div>
+
+        {% block modal %}
+        {% endblock %}
+
+        {% block js_bot %}
+            <script src="https://code.jquery.com/jquery-3.3.1.min.js" integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8=" crossorigin="anonymous"></script>
+            <script src="https://cdnjs.cloudflare.com/ajax/libs/semantic-ui/2.4.1/semantic.min.js"></script>
+        {% endblock %}
+    </body>
+</html>

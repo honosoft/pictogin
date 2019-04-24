@@ -1,0 +1,44 @@
+###############################################################################
+#                          Generated on phpdocker.io                          #
+###############################################################################
+version: "3.1"
+services:
+
+    mysql:
+      image: mysql:5.7
+      container_name: pictogin-mysql
+      working_dir: /application
+      volumes:
+        - .:/application
+      environment:
+        - MYSQL_ROOT_PASSWORD=admin
+        - MYSQL_DATABASE=pictogin
+        - MYSQL_USER=user
+        - MYSQL_PASSWORD=password
+      ports:
+        - "8502:3306"
+
+    webserver:
+      image: nginx:alpine
+      container_name: pictogin-webserver
+      working_dir: /application
+      volumes:
+          - .:/application
+          - ./phpdocker/nginx/nginx.conf:/etc/nginx/conf.d/default.conf
+      ports:
+       - "8500:80"
+
+    php-fpm:
+      build: phpdocker/php-fpm
+      container_name: pictogin-php-fpm
+      working_dir: /application
+      volumes:
+        - .:/application
+        - ./phpdocker/php-fpm/php-ini-overrides.ini:/etc/php/7.2/fpm/conf.d/99-overrides.ini
+
+    composer:
+      image: composer:1.8.4
+      working_dir: /application
+      volumes:
+        - .:/application
+

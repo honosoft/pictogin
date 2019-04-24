@@ -1,0 +1,90 @@
+{% extends "default.twig" %}
+
+{% block content %}
+    <h1 class="ui center aligned header">
+        {{ title }}
+    </h1>
+
+    {% if email %}
+
+        <form id="form" class="ui large form" method="POST" action="{{ action }}">
+            <input id="choice" type="hidden" name="choice" value="">
+            <div class="field">
+                {{ imageMessage }}
+            </div>
+            <div class="field">
+                <div class="ui small images {{ columnCount }} column grid middle aligned">
+                    {% for index, image in images %}
+                        <div class="column">
+                            <div class="ui hover-effect" onclick="submitForm({{index}});"><img src="{{image}}"></div>
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% block buttons %}
+            {% endblock buttons %}
+            <div class="field">
+                <a class="ui fluid large grey button" href="/">Cancel</a>
+            </div>
+        </form>
+
+    {% else %}
+
+        <form id="form" class="ui large form" method="POST" action="{{ action }}">
+            <div class="field">
+                {{ emailMessage }}
+            </div>
+            <div class="ui stacked segment">
+                <div class="field">
+                    <div class="ui left icon input">
+                        <i class="user icon"></i>
+                        <input type="text" name="email" placeholder="E-mail address">
+                    </div>
+                </div>
+                <div class="field">
+                    <button class="ui fluid large green submit button">Next</button>
+                </div>
+                <div class="field">
+                    <a class="ui fluid large grey button" href="/">Cancel</a>
+                </div>
+            </div>
+        </form>
+        {% if error %}
+            <div class="ui error message">{{ error }}</div>
+        {% endif %}
+
+    {% endif %}
+
+{% endblock %}
+
+{% block modal %}
+    <div id="forgotpwd" class="ui modal">
+        <i class="close icon"></i>
+        <div class="header">
+            Forgot Password
+        </div>
+        <div class="image content">
+            <div class="ui medium image">
+                <img src="/res/icon/forgot-password.png">
+            </div>
+            <div class="description">
+                <div class="ui header">Receive a magic link?</div>
+                <p>We will send you an E-Mail that will contain a link that will let you log-in and re-create a new pictogin.</p>
+            </div>
+        </div>
+        <div class="actions">
+            <div class="ui black deny button">
+                No
+            </div>
+            <div class="ui positive right labeled icon button">
+                Yes
+                <i class="checkmark icon"></i>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block js_bot %}
+    {{ parent() }}
+    <script src="/js/authentication.js"></script>
+{% endblock %}
