@@ -34,15 +34,15 @@ launch the url: ``http://localhost:8500/``
 
 ## TODO
 * UI
-  [x] click on image and register it for the next action - or better, go to next page onclick
-  [x] make the refresh not increment the current page... or at least, reset it.
-  [ ] implement all buttons.
-  [ ] Still bug when press F5 in login.
-  [ ] Do a /signup that uses the  its own controller.
+  - [x] click on image and register it for the next action - or better, go to next page onclick
+  - [x] make the refresh not increment the current page... or at least, reset it.
+  - [ ] implement all buttons.
+  - [ ] Still bug when press F5 in login.
+  - [ ] Do a /signup that uses the  its own controller.
 * unsplash
-  [x] register an unsplash account.
-  [x] implement the code.
-  [ ] register write the documentation.
+  - [x] register an unsplash account.
+  - [x] implement the code.
+  - [ ] register write the documentation.
 * find a common size?
 * Make a reset password.
 * Make a homepage (anonymous) that explains the project and link the GIT.
