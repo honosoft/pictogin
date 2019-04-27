@@ -46,3 +46,4 @@ launch the url: ``http://localhost:8500/``
 * find a common size?
 * Make a reset password.
 * Make a homepage (anonymous) that explains the project and link the GIT.
+- [x] 

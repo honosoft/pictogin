@@ -1,5 +1,5 @@
 <?php
 
 return [
-    // TODO
+    "from" => "YOUR@EMAIL.COM"
 ];

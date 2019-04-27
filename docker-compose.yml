@@ -32,6 +32,9 @@ services:
       build: phpdocker/php-fpm
       container_name: pictogin-php-fpm
       working_dir: /application
+      environment:
+        - DOCKER=1
+        - DEBUG=1
       volumes:
         - .:/application
         - ./phpdocker/php-fpm/php-ini-overrides.ini:/etc/php/7.2/fpm/conf.d/99-overrides.ini
