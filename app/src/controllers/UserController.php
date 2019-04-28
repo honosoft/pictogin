@@ -42,6 +42,8 @@ class UserController {
                 return $response->withStatus(302)->withHeader('Location', $this->router->pathFor('home'));
             }
 
+            // TODO: validate that the user was inserted!
+
             $selectedImages = $_SESSION['signup']['selected']; // TODO: find the real url - may be bigger images stackable?
             $email = $_SESSION['signup']['email'];
             unset($_SESSION['signup']); // clear the login session!

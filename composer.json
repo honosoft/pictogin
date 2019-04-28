@@ -19,5 +19,8 @@
         "psr-4": {
             "pictogin\\": "app/src/"
         }
+    },
+    "scripts": {
+        "build": "php scripts/build.php"
     }
 }

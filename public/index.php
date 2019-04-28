@@ -36,12 +36,12 @@ $app->get('/', function ($request, $response) {
     return $this->view->render($response, 'home.twig', ['user' => $_SESSION['user']]);
 })->setName('home');
 
-/** EMAIL TEST - UNCOMMENT IF NECESSARY
-$app->get('/mail', function () {
-    $mail = new MailClient();
-    $mail->subject("Test Mail")->template("mails/welcome.twig", ["email" => "test@email.com"])->send("sauleil@gmail.com");
-});
- */
+// EMAIL TEST - UNCOMMENT IF NECESSARY
+//$app->get('/mail', function () {
+//    $mail = new MailClient();
+//    $mail->subject("Test Mail")->template("mails/welcome.twig", ["email" => "test@email.com"])->send("sauleil@gmail.com");
+//});
+
 
 
 UserController::register($app, $config);

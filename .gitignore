@@ -1,7 +1,9 @@
 .idea/
 vendor/
+output/
 
 # configuration file that you don't want to share on GIT. Use the sample version to rename it.
 configs/unsplash.php
 configs/mail.php
 configs/mysql.php
+configs/server-host.php

@@ -19,7 +19,9 @@ Another thing that I though is that we should only give X number of retries, in 
 to brute force the algorithm. That why, I will lock the login flow and use the "send magic link" to
 log back to the service.
 
-## How to run
+## Development
+
+### How to run
 
 Go in the ``/configs`` directory and configure the ``*.sample.php`` files by removing the ``.sample'``.
 
@@ -31,19 +33,38 @@ docker-compose up
 
 launch the url: ``http://localhost:8500/``
 
+### How to build
+
+```
+docker-compose run composer run-script build
+```
+
 
 ## TODO
+* Flow
+  * Signup (create account)
+    - [ ] Create account in DB
+    - [ ] Send an e-mail
+  - [ ] Login
 * UI
-  [x] click on image and register it for the next action - or better, go to next page onclick
-  [x] make the refresh not increment the current page... or at least, reset it.
-  [ ] implement all buttons.
-  [ ] Still bug when press F5 in login.
-  [ ] Do a /signup that uses the  its own controller.
+  - [x] click on image and register it for the next action - or better, go to next page onclick
+  - [x] make the refresh not increment the current page... or at least, reset it.
+  - [ ] implement all buttons.
+  - [ ] Still bug when press F5 in login.
+  - [ ] Do a /signup that uses the  its own controller.
 * unsplash
-  [x] register an unsplash account.
-  [x] implement the code.
-  [ ] register write the documentation.
+  - [x] register an unsplash account.
+  - [x] implement the code.
+  - [ ] register write the documentation.
 * find a common size?
+  - [ ] check if we really need to have a common image size
 * Make a reset password.
-* Make a homepage (anonymous) that explains the project and link the GIT.
-- [x] 
+  - [x] Implement a mail class
+  - [x] Use twig templates
+  - [ ] Test with mailler on Dreamhost
+* Add content
+  - [ ] Make a homepage (anonymous) that explains the project and link the GIT/honosoft
+  - [X] When logged in, give some more explanation. Add a cute diagram. 
+* Deployment
+  - [ ] Check if we can deploy using composer.
+  - [ ] Check if I can add the sftp information and upload directly? https://github.com/emmanuelroecker/php-sync-sftp
