@@ -31,14 +31,14 @@ class QuickDb {
 
     /**
      * @param string $email
-     * @param array $images
+     * @param array $password List of image ids.
      * @return bool
      * @throws \Exception
      */
-    public function addUser(string $email, array $images) {
+    public function addUser(string $email, array $password) {
         $email = strtolower($email);
         $id = Uuid::uuid1()->toString();
-        $password = json_encode($images); // TODO: Probably use a crypt with a key? How can it be secure if the key is in this code?
+        $password = json_encode($password); // TODO: Probably use a crypt with a key? How can it be secure if the key is in this code?
 
         $stm = $this->connection->prepare("INSERT INTO user (id, email, password) VALUES (?, ?, ?);");
         $stm->bind_param('sss', $id, $email, $password);
@@ -55,12 +55,17 @@ class QuickDb {
     public function getUser($email) {
         $email = strtolower($email);
 
-        // TODO: use params.
-        $result = $this->connection->query("SELECT * FROM user WHERE email=\"$email\"");
-
-        if ($result && $result->num_rows > 0) {
-            return $result->fetch_assoc(); //TODO: the original data was an array. Need to use json_decode.
+        $stm = $this->connection->prepare("SELECT * FROM user WHERE email=?");
+        $stm->bind_param('s',$email);
+        if ($stm->execute()) {
+            $result = $stm->get_result();
+            if ($result->num_rows === 1) {
+                $row = $result->fetch_assoc();
+                $row['password'] = json_decode($row['password']); // override the password as array.
+                return $row;
+            }
         }
+        $stm->close();
         return NULL;
     }
 }
