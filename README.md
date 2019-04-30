@@ -68,3 +68,5 @@ docker-compose run composer run-script build
 * Deployment
   - [ ] Check if we can deploy using composer.
   - [ ] Check if I can add the sftp information and upload directly? https://github.com/emmanuelroecker/php-sync-sftp
+* Data
+  - [ ] Log ips in database. At least the last 5 or 10 different Ips.

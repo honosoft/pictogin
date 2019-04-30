@@ -5,6 +5,13 @@ namespace pictogin;
 use mysqli;
 use Ramsey\Uuid\Uuid;
 
+/**
+ * Class QuickDb
+ * @package pictogin
+ * Simple SQL class to encapsulate the operation. Not really injection safe for now.
+ *
+ * @Note Will include my other project one day.
+ */
 class QuickDb {
     private $connection;
 
@@ -33,13 +40,12 @@ class QuickDb {
         $id = Uuid::uuid1()->toString();
         $password = json_encode($images); // TODO: Probably use a crypt with a key? How can it be secure if the key is in this code?
 
-        $result = $this->connection->query("INSERT INTO user (id, email, password) VALUES (\"$id\", \"$email\", \"$password\");");
+        $stm = $this->connection->prepare("INSERT INTO user (id, email, password) VALUES (?, ?, ?);");
+        $stm->bind_param('sss', $id, $email, $password);
+        $result = $stm->execute();
+        $stm->close();
 
-        if ($result && $result->num_rows > 0) {
-            // TODO: send a mail for validation!
-            return TRUE;
-        }
-        return FALSE;
+        return $result;
     }
 
     /**
@@ -49,10 +55,11 @@ class QuickDb {
     public function getUser($email) {
         $email = strtolower($email);
 
+        // TODO: use params.
         $result = $this->connection->query("SELECT * FROM user WHERE email=\"$email\"");
 
         if ($result && $result->num_rows > 0) {
-            return $result->fetch_assoc();
+            return $result->fetch_assoc(); //TODO: the original data was an array. Need to use json_decode.
         }
         return NULL;
     }

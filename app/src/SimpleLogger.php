@@ -6,7 +6,7 @@ namespace pictogin;
 class SimpleLogger {
     public static function log($message) {
         if (getenv('DOCKER')) {
-            fwrite(fopen('php://stdout', 'w'), $message);
+            fwrite(fopen('php://stdout', 'w'),  "$message\r\n");
         }
     }
 

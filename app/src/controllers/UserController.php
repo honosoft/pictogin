@@ -3,7 +3,9 @@
 namespace pictogin\controllers;
 
 use pictogin\images\ImageFactory;
+use pictogin\MailClient;
 use pictogin\QuickDb;
+use pictogin\SimpleLogger;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Slim\App;
@@ -34,22 +36,8 @@ class UserController {
         })->setName('signup');
 
         $app->post('/signup', function ($request, $response) {
-            UserController::postSignup($this, $request, $response); // NOTE: for some reason the callable [UserController::class, 'postLogin'] is not working.
+            UserController::postSignup($this, $request, $response);
         });
-
-        $app->get('/thanks', function ($request, $response) {
-            if (!isset($_SESSION['signup'])) {
-                return $response->withStatus(302)->withHeader('Location', $this->router->pathFor('home'));
-            }
-
-            // TODO: validate that the user was inserted!
-
-            $selectedImages = $_SESSION['signup']['selected']; // TODO: find the real url - may be bigger images stackable?
-            $email = $_SESSION['signup']['email'];
-            unset($_SESSION['signup']); // clear the login session!
-
-            return $this->view->render($response, 'thanks.twig', ['images' => $selectedImages, 'email' => $email]);
-        })->setName('signup');
 
         $app->post('/user/magic-link', function ($request, $response) {
             // TODO: use the send mail and twig template to send an e-mail - use the session email.
@@ -137,18 +125,38 @@ class UserController {
 
         $body = $request->getParsedBody();
         if (isset($_SESSION['signup'])) {
-            if ($_SESSION['login']['step'] >= 3) { // TODO: constant in a file.
+            if (isset($body['choice'])) {
+                $previousIndex = $_SESSION['signup']['step'] - 1;
+                $previousImages = $_SESSION['signup']['images'][$previousIndex];
+                $item = $previousImages[$body['choice']];
+
+                $_SESSION['signup']['step']++;
+                $_SESSION['signup']['selected'][] = $item['id'];
+            } else {
+                SimpleLogger::log("1.2.2");
+                // TODO: should I do something?
+            }
+
+            if ($_SESSION['signup']['step'] > 3) { // TODO: constant in a file.
+                $selectedImages = $_SESSION['signup']['selected'];
+                $email = $_SESSION['signup']['email'];
 
                 $db = new QuickDb();
-                $db->addUser($_SESSION['signup']['email'], $_SESSION['signup']['selected']);
+                $db->addUser($email, $selectedImages);
+                static::initUser($email, $db);
 
-                // TODO: Send to thank you page and "use" the ids in the session and unset it after.
-                return $response->withStatus(302)->withHeader('Location', $app->router->pathFor('home'));
+                $mailClient = new MailClient();
+                $mailClient->subject("Welcome to Pictogin!")
+                    ->template('mails/welcome.twig', ['email' => $email])
+                    ->send($email);
+
+                unset($_SESSION['signup']); // clear the signup session!
+
+                return $app->view->render($response, 'thanks.twig', [
+                    'images' => $selectedImages, // fetch the images by ids.
+                    'email' => $email]);
             } else {
-                if (isset($body['choice']) && $body['choice']) {
-                    $_SESSION['signup']['step']++;
-                    $_SESSION['signup']['selected'][] = $_SESSION['signup']['images'][intval($body['choice'])];
-                }
+                // ?? anything to do ??
             }
         } else {
             if (!filter_var($body['email'], FILTER_VALIDATE_EMAIL)) {

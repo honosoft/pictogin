@@ -7,6 +7,7 @@ namespace pictogin;
  * @package pictogin
  * Send simple mail message to an e-mail address.
  * @remark Doesn't support multipart message.
+ * @remark use text/html as content type and ut8 encoding by default.
  */
 class MailClient {
     private $config;

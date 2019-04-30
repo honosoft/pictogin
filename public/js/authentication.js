@@ -2,7 +2,6 @@
 function submitForm(index) {
     $('.hover-effect').prop("onclick", null).off("click");
     $('#choice').val(index);
-    console.log("submit");
     $('#form').submit();
 }
 
