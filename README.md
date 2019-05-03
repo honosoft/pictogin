@@ -19,6 +19,7 @@ Another thing that I though is that we should only give X number of retries, in 
 to brute force the algorithm. That why, I will lock the login flow and use the "send magic link" to
 log back to the service.
 
+
 ## Development
 
 ### How to run
@@ -43,30 +44,49 @@ docker-compose run composer run-script build
 ## TODO
 * Flow
   * Signup (create account)
-    - [ ] Create account in DB
-    - [ ] Send an e-mail
-  - [ ] Login
+    - [x] Create account in DB
+    - [x] Send an e-mail
+  - [x] Login - Modified version.
 * UI
   - [x] click on image and register it for the next action - or better, go to next page onclick
   - [x] make the refresh not increment the current page... or at least, reset it.
-  - [ ] implement all buttons.
-  - [ ] Still bug when press F5 in login.
-  - [ ] Do a /signup that uses the  its own controller.
+  - [ ] Still bug when press F5 in login (check if ctrf token fix it).
+  - [x] Do a /signup that uses the  its own controller.
 * unsplash
   - [x] register an unsplash account.
   - [x] implement the code.
-  - [ ] register write the documentation.
+  - [ ] ask for a pro account.
+  - [ ] register - write the documentation in readme.
 * find a common size?
-  - [ ] check if we really need to have a common image size
+  - [x] check if we really need to have a common image size (note: unsplash can resize/crop at will)
 * Make a reset password.
   - [x] Implement a mail class
   - [x] Use twig templates
-  - [ ] Test with mailler on Dreamhost
+  - [ ] Send the actual mail
+* E-Mail.
+  - [x] Test with mailler on Dreamhost
+  - [x] Send a mail on registration.
+  - [ ] Send a mail on forget password.
 * Add content
   - [ ] Make a homepage (anonymous) that explains the project and link the GIT/honosoft
-  - [X] When logged in, give some more explanation. Add a cute diagram. 
+  - [ ] When logged in, give some more explanation. Add a cute diagram. 
 * Deployment
-  - [ ] Check if we can deploy using composer.
-  - [ ] Check if I can add the sftp information and upload directly? https://github.com/emmanuelroecker/php-sync-sftp
-* Data
+  - [x] Check if we can deploy using composer.
+  - [x] Check if I can add the sftp information and upload directly? https://github.com/emmanuelroecker/php-sync-sftp
+* Data (optional)
   - [ ] Log ips in database. At least the last 5 or 10 different Ips.
+* DB
+  - [ ] Add a .sql in a docker folder for the init.d
+  - [ ] Use my Simple ORM?
+* Layout
+  - [ ] Use the https://semantic-ui.com/examples/homepage.html for the main layout.
+  - [ ] Finish the layout for the thank you.
+* Security
+  - [ ] Ensure the CTRF token is activated. 
+ * Localization
+  - [ ] Use i17n for text in twig or in file.
+  
+## Bugs
+- [ ] When account locked, can still login.
+- [ ] Search for todos and if not done, add them to the gitlab.
+- [ ] Log out page does not display properly. Did a fix but untested. 

@@ -68,4 +68,22 @@ class QuickDb {
         $stm->close();
         return NULL;
     }
+
+    public function incrementPasswordRetries($email) {
+        $email = strtolower($email);
+        $stm = $this->connection->prepare("UPDATE user SET password_retries = password_retries + 1 WHERE email=?;");
+        $stm->bind_param('s',$email);
+        $ret = $stm->execute();
+        $stm->close();
+        return $ret;
+    }
+
+    public function resetPasswordRetries($email) {
+        $email = strtolower($email);
+        $stm = $this->connection->prepare("UPDATE user SET password_retries = 0 WHERE email=?;");
+        $stm->bind_param('s',$email);
+        $ret = $stm->execute();
+        $stm->close();
+        return $ret;
+    }
 }

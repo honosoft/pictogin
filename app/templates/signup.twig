@@ -3,14 +3,21 @@
 {% set action = '/signup' %}
 {% set title = 'Sign Up' %}
 {% set imageMessage %}
-    <div class="ui">Click on the most meaningful image for you. (Step {{ step }} / 3)</div>
+    <div class="ui">Click on the most meaningful image for you. (Step {{ step }} / {{ maxSteps }})</div>
 {% endset %}
 {% set emailMessage %}
     <div class="ui">To register a new account, just follow the steps.</div>
 {% endset %}
 
-{% block buttons %}
-    <div class="field">
-        <a class="ui fluid large teal button" href="{{ action }}">More images</a>
-    </div>
-{% endblock buttons %}
+
+{% block process_buttons %}
+    <!--div class="field">
+        <a class="ui fluid large teal button" href="{{ action }}">More images (NOT SURE ABOUT THAT...)</a>
+    </div-->
+    {{ parent() }}
+{% endblock process_buttons %}
+
+{% block js_bot %}
+    {{ parent() }}
+    <script src="/js/signup.js"></script>
+{% endblock %}

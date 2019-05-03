@@ -12,7 +12,6 @@ use Slim\App;
 
 class UserController {
     private static $config;
-    private static $app;
 
     /**
      * @param $app App
@@ -23,12 +22,15 @@ class UserController {
 
         $app->get('/login', function ($request, $response) {
             session_destroy();
-            return $this->view->render($response, 'login.twig', []);
+            // need to override the user parameter since it's destroyed and was set at the initialization.
+            return $this->view->render($response, 'login.twig', ['user' => null]);
         })->setName('login');
 
         $app->post('/login', function ($request, $response) {
             UserController::postLogin($this, $request, $response); // NOTE: for some reason the callable [UserController::class, 'postLogin'] is not working.
         });
+
+        // TODO: should we add a real log out page with a 'see you next time!'.
 
         $app->get('/signup', function ($request, $response) {
             session_destroy();
@@ -42,6 +44,10 @@ class UserController {
         $app->post('/user/magic-link', function ($request, $response) {
             // TODO: use the send mail and twig template to send an e-mail - use the session email.
             return "not implemented";
+        });
+
+        $app->get('/test', function() {
+            return 'OK';
         });
     }
 
@@ -57,27 +63,47 @@ class UserController {
         }
 
         $body = $request->getParsedBody();
+        $db = new QuickDb();
+
         if (isset($_SESSION['login'])) {
-            if ($_SESSION['login']['step'] >= 3) { // TODO: constant in a file.
+            SimpleLogger::log("1 - now asking for password.");
+            $email = $_SESSION['login']['email'];
+            $user = $db->getUser($email);
+            $_SESSION['login']['selected'][] = explode(',', $body['choice']);
 
-                // TODO: check and send to an error page if one mistake in the 3...
+            if ($_SESSION['login']['phase'] >= static::$config['login']['phases']['count']) {
+                SimpleLogger::log("  1.1 - All phases completed.");
 
-                static::initUser($_SESSION['login']['email']);
-
-                unset($_SESSION['login']); // clear the login session!
-                return $response->withStatus(302)->withHeader('Location', $app->router->pathFor('home'));
+                $diff = array_diff($_SESSION['login']['generated'], $_SESSION['login']['selected']);
+                if (count($diff) > 0) {
+                    SimpleLogger::log("    1.1.1 - Choices doesn't match.");
+                    $db->incrementPasswordRetries($email);
+                    unset($_SESSION['login']); // clear the login session!
+                    return $app->view->render($response, 'login.twig', [
+                        'action' => '/login',
+                        'error' => "Your account is locked. Please use the 'Forgot Password'."
+                    ]);
+                } else {
+                    SimpleLogger::log("    1.1.2 - Login successful.");
+                    $db->resetPasswordRetries($email);
+                    static::initUser($email);
+                    unset($_SESSION['login']); // clear the login session
+                    return $response->withStatus(302)->withHeader('Location', $app->router->pathFor('home'));
+                }
             } else {
-                $_SESSION['login']['step']++;
-                $_SESSION['login']['selected'][] = $body['choice'];
+                SimpleLogger::log("  1.2 - Incrementing phase.");
+                $_SESSION['login']['phase']++;
             }
         } else {
+            SimpleLogger::log("2 - Checking the e-mail.");
             $errorMessage = "The e-mail entered is not registered on pictogin. Please use sign-up to create a new account.";
-            if (!filter_var($body['email'], FILTER_VALIDATE_EMAIL)) {
+
+            $email = $body['email'];
+            if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
                 return $app->view->render($response, 'login.twig', ['error' => $errorMessage]);
             }
 
-            $db = new QuickDb();
-            $user = $db->getUser($body['email']);
+            $user = $db->getUser($email);
             if (!$user) {
                 return $app->view->render($response, 'login.twig', [
                     'action' => '/login',
@@ -85,6 +111,7 @@ class UserController {
                 ]);
             }
             if ($user['password_retries'] > static::$config['login']['retry_count']) {
+                unset($_SESSION['login']);
                 return $app->view->render($response, 'login.twig', [
                     'action' => '/login',
                     'error' => "Your account is locked. Please use the 'Forgot Password'."
@@ -93,20 +120,22 @@ class UserController {
 
             // Initialize the session for the first time.
             $_SESSION['login'] = [
-                'step' => 1,
-                'email' => $body['email'],
+                'phase' => 1,
+                'error' => false,
+                'email' => $email,
                 'selected' => [],
-                'generated' => [] // TODO: generate the order from the $user [shuffle and pop random [-1, 0]]
+                'generated' => []
             ];
         }
 
-        $_SESSION['login']['images'] = static::generateImages(); // TODO: be sure to render using an existing image or not.
+        $_SESSION['login']['images'] = static::generateImages($user['password']);
 
         return $app->view->render($response, 'login.twig', [
             'action' => '/login',
             'email' => $_SESSION['login']['email'],
             'images' => array_map(function($item) { return $item['url']; }, $_SESSION['login']['images']),
-            'step'  => $_SESSION['login']['step'],
+            'step'  => $_SESSION['login']['phase'],
+            'maxSteps' => static::$config['login']['phases']['count'],
             'columnCount' => static::$config['login']['images']['column-count']
         ]);
     }
@@ -134,29 +163,28 @@ class UserController {
                 $_SESSION['signup']['selected'][] = $item['id'];
             } else {
                 SimpleLogger::log("1.2.2");
-                // TODO: should I do something?
+                // TODO: should redirect to /signup?
             }
 
-            if ($_SESSION['signup']['step'] > 3) { // TODO: constant in a file.
+            if ($_SESSION['signup']['step'] > static::$config['signup']['images-count']) {
                 $selectedImages = $_SESSION['signup']['selected'];
                 $email = $_SESSION['signup']['email'];
 
                 $db = new QuickDb();
                 $db->addUser($email, $selectedImages);
-                static::initUser($email, $db);
+                static::initUser($email, $db); // use default init mechanism.
 
                 $mailClient = new MailClient();
                 $mailClient->subject("Welcome to Pictogin!")
                     ->template('mails/welcome.twig', ['email' => $email])
                     ->send($email);
 
-                unset($_SESSION['signup']); // clear the signup session!
+                unset($_SESSION['signup']); // remove unwanted cookies
 
                 return $app->view->render($response, 'thanks.twig', [
-                    'images' => $selectedImages, // fetch the images by ids.
+                    "user", $_SESSION['user'], // NOTE: normally, it's implicit, but since its just been created, we have to pass it or redirect.
+                    'images' => $selectedImages, // TODO: fetch the images by ids to display.
                     'email' => $email]);
-            } else {
-                // ?? anything to do ??
             }
         } else {
             if (!filter_var($body['email'], FILTER_VALIDATE_EMAIL)) {
@@ -178,20 +206,72 @@ class UserController {
             ];
         }
 
-        $images = static::generateImages(); // TODO: be sure not to show the same images...;
+        $images = static::fetchImages(static::$config['login']['images']['count']); // TODO: be sure not to show the same previous images...
         $_SESSION['signup']['images'][] = $images;
 
         return $app->view->render($response, 'signup.twig', [
             'email' => $_SESSION['signup']['email'],
             'images' => array_map(function($item) { return $item['url']; }, $images),
             'step'  => $_SESSION['signup']['step'],
+            'maxSteps'  => static::$config['signup']['images-count'],
             'columnCount' => static::$config['login']['images']['column-count']
         ]);
     }
 
-    private static function generateImages() : array {
-        // TODO: if in login mode, be sure to pass an existing image to randomize in the list.
-        return static::fetchImages();
+    /**
+     * Using all the parameters, return the list of available images
+     * from the user password.
+     * @param $userImages array The list of all images the user have saved in his profile.
+     * @return array String of images.
+     */
+    private static function getRemainingUserImages($userImages) : array {
+        // reduce the array
+        $images = array_diff($userImages, $_SESSION['login']['generated']);
+        shuffle($images);
+
+        // find the number of items we want.
+        $min = static::$config['login']['phases']['n'] - static::$config['login']['phases']['variation'];
+        $max = static::$config['login']['phases']['n'];
+        $count = min(rand($min, $max),count($images));
+        SimpleLogger::log("{min: $min, max: $max, count: $count}");
+
+        // return only the elements of the array.
+        $ret = array_slice($images, 0, $count);
+        SimpleLogger::log("user(" . json_encode($userImages) . ") - existing("
+            . json_encode($_SESSION['login']['generated']) . ") = remaining("
+            . json_encode($images) . ") => reduce("
+            . json_encode($ret) . ")");
+        return $ret;
+    }
+
+    /**
+     * Given a base array (images), insert randomly the list of items (selectedImages).
+     * @param $images array
+     * @param $selectedImages array
+     */
+    private static function randomizeUserImages(&$images, $selectedImages) {
+        $itemIndexes = range(0, count($images) - 1);
+        shuffle($itemIndexes);
+
+        $factory = ImageFactory::create();
+        for ($i = 0; $i < count($selectedImages); $i++) {
+            $images[$itemIndexes[$i]] = $factory->find($selectedImages[$i]);
+        }
+    }
+
+    // --------- TODO: DEBUG THIS METHOD. -----------
+    private static function generateImages(array $userImages) : array {
+        SimpleLogger::log('Generating images');
+        $selectedImages = static::getRemainingUserImages($userImages);
+        $images = static::fetchImages(static::$config['login']['phases']['k']);
+        $_SESSION['login']['generated'] = array_merge($_SESSION['login']['generated'], $selectedImages);
+
+        // NOTE: if in a previous phase the user failed -> just use randomized content.
+        if (!$_SESSION['login']['error']) {
+            static::randomizeUserImages($images, $userImages);
+        }
+
+        return $images;
     }
 
     private static function initUser($email, $db = null) {
@@ -203,8 +283,8 @@ class UserController {
          // NOTE: add other user info here as well.
     }
 
-    private static function fetchImages() {
+    private static function fetchImages($count) {
         $factory = ImageFactory::create();
-        return $factory->fetch(static::$config['login']['images']['count']);
+        return $factory->fetch($count);
     }
 }
