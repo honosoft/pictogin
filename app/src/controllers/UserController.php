@@ -2,6 +2,7 @@
 
 namespace pictogin\controllers;
 
+use pictogin\IController;
 use pictogin\images\ImageFactory;
 use pictogin\MailClient;
 use pictogin\QuickDb;
@@ -10,24 +11,25 @@ use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Slim\App;
 
-class UserController {
-    private static $config;
+class UserController implements IController{
+    private $config;
 
     /**
      * @param $app App
      * @param $config
      */
-    public static function register($app, $config) {
-        static::$config = $config;
+    public function register($app, $config) {
+        $this->config = $config;
+        $that = $this;
 
-        $app->get('/login', function ($request, $response) {
+        $app->get('/login', function ($request, $response)  {
             session_destroy();
             // need to override the user parameter since it's destroyed and was set at the initialization.
             return $this->view->render($response, 'login.twig', ['user' => null]);
         })->setName('login');
 
-        $app->post('/login', function ($request, $response) {
-            UserController::postLogin($this, $request, $response); // NOTE: for some reason the callable [UserController::class, 'postLogin'] is not working.
+        $app->post('/login', function ($request, $response) use ($that) {
+            $that->postLogin($this, $request, $response); // NOTE: for some reason the callable [UserController::class, 'postLogin'] is not working.
         });
 
         // TODO: should we add a real log out page with a 'see you next time!'.
@@ -37,8 +39,8 @@ class UserController {
             return $this->view->render($response, 'signup.twig', []);
         })->setName('signup');
 
-        $app->post('/signup', function ($request, $response) {
-            UserController::postSignup($this, $request, $response);
+        $app->post('/signup', function ($request, $response) use ($that) {
+            $that->postSignup($this, $request, $response);
         });
 
         $app->post('/user/magic-link', function ($request, $response) {
@@ -57,7 +59,7 @@ class UserController {
      * @param $response ResponseInterface
      * @return mixed
      */
-    private static function postLogin($app, $request, $response) {
+    private function postLogin($app, $request, $response) {
         if (isset($_SESSION['user'])) {
             return $response->withStatus(302)->withHeader('Location', $app->router->pathFor('home'));
         }
@@ -71,7 +73,7 @@ class UserController {
             $user = $db->getUser($email);
             $_SESSION['login']['selected'][] = explode(',', $body['choice']);
 
-            if ($_SESSION['login']['phase'] >= static::$config['login']['phases']['count']) {
+            if ($_SESSION['login']['phase'] >= $this->config['login']['phases']['count']) {
                 SimpleLogger::log("  1.1 - All phases completed.");
 
                 $diff = array_diff($_SESSION['login']['generated'], $_SESSION['login']['selected']);
@@ -86,7 +88,7 @@ class UserController {
                 } else {
                     SimpleLogger::log("    1.1.2 - Login successful.");
                     $db->resetPasswordRetries($email);
-                    static::initUser($email);
+                    $this->initUser($email);
                     unset($_SESSION['login']); // clear the login session
                     return $response->withStatus(302)->withHeader('Location', $app->router->pathFor('home'));
                 }
@@ -110,7 +112,7 @@ class UserController {
                     'error' => $errorMessage
                 ]);
             }
-            if ($user['password_retries'] > static::$config['login']['retry_count']) {
+            if ($user['password_retries'] > $this->config['login']['retry_count']) {
                 unset($_SESSION['login']);
                 return $app->view->render($response, 'login.twig', [
                     'action' => '/login',
@@ -128,15 +130,15 @@ class UserController {
             ];
         }
 
-        $_SESSION['login']['images'] = static::generateImages($user['password']);
+        $_SESSION['login']['images'] = $this->generateImages($user['password']);
 
         return $app->view->render($response, 'login.twig', [
             'action' => '/login',
             'email' => $_SESSION['login']['email'],
             'images' => array_map(function($item) { return $item['url']; }, $_SESSION['login']['images']),
             'step'  => $_SESSION['login']['phase'],
-            'maxSteps' => static::$config['login']['phases']['count'],
-            'columnCount' => static::$config['login']['images']['column-count']
+            'maxSteps' => $this->config['login']['phases']['count'],
+            'columnCount' => $this->config['login']['images']['column-count']
         ]);
     }
 
@@ -147,7 +149,7 @@ class UserController {
      * @return mixed
      * @throws \Exception
      */
-    private static function postSignup($app, $request, $response) {
+    private function postSignup($app, $request, $response) {
         if (isset($_SESSION['user'])) {
             return $response->withStatus(302)->withHeader('Location', $app->router->pathFor('home'));
         }
@@ -166,13 +168,13 @@ class UserController {
                 // TODO: should redirect to /signup?
             }
 
-            if ($_SESSION['signup']['step'] > static::$config['signup']['images-count']) {
+            if ($_SESSION['signup']['step'] > $this->config['signup']['images-count']) {
                 $selectedImages = $_SESSION['signup']['selected'];
                 $email = $_SESSION['signup']['email'];
 
                 $db = new QuickDb();
                 $db->addUser($email, $selectedImages);
-                static::initUser($email, $db); // use default init mechanism.
+                $this->initUser($email, $db); // use default init mechanism.
 
                 $mailClient = new MailClient();
                 $mailClient->subject("Welcome to Pictogin!")
@@ -206,15 +208,15 @@ class UserController {
             ];
         }
 
-        $images = static::fetchImages(static::$config['login']['images']['count']); // TODO: be sure not to show the same previous images...
+        $images = ImageFactory::fetch($this->config['login']['images']['count']); // TODO: be sure not to show the same previous images...
         $_SESSION['signup']['images'][] = $images;
 
         return $app->view->render($response, 'signup.twig', [
             'email' => $_SESSION['signup']['email'],
             'images' => array_map(function($item) { return $item['url']; }, $images),
             'step'  => $_SESSION['signup']['step'],
-            'maxSteps'  => static::$config['signup']['images-count'],
-            'columnCount' => static::$config['login']['images']['column-count']
+            'maxSteps'  => $this->config['signup']['images-count'],
+            'columnCount' => $this->config['login']['images']['column-count']
         ]);
     }
 
@@ -224,14 +226,14 @@ class UserController {
      * @param $userImages array The list of all images the user have saved in his profile.
      * @return array String of images.
      */
-    private static function getRemainingUserImages($userImages) : array {
+    private function getRemainingUserImages($userImages) : array {
         // reduce the array
         $images = array_diff($userImages, $_SESSION['login']['generated']);
         shuffle($images);
 
         // find the number of items we want.
-        $min = static::$config['login']['phases']['n'] - static::$config['login']['phases']['variation'];
-        $max = static::$config['login']['phases']['n'];
+        $min = $this->config['login']['phases']['n'] - $this->config['login']['phases']['variation'];
+        $max = $this->config['login']['phases']['n'];
         $count = min(rand($min, $max),count($images));
         SimpleLogger::log("{min: $min, max: $max, count: $count}");
 
@@ -249,42 +251,36 @@ class UserController {
      * @param $images array
      * @param $selectedImages array
      */
-    private static function randomizeUserImages(&$images, $selectedImages) {
+    private function randomizeUserImages(&$images, $selectedImages) {
         $itemIndexes = range(0, count($images) - 1);
         shuffle($itemIndexes);
 
-        $factory = ImageFactory::create();
         for ($i = 0; $i < count($selectedImages); $i++) {
-            $images[$itemIndexes[$i]] = $factory->find($selectedImages[$i]);
+            $images[$itemIndexes[$i]] = ImageFactory::find($selectedImages[$i]);
         }
     }
 
     // --------- TODO: DEBUG THIS METHOD. -----------
-    private static function generateImages(array $userImages) : array {
+    private function generateImages(array $userImages) : array {
         SimpleLogger::log('Generating images');
-        $selectedImages = static::getRemainingUserImages($userImages);
-        $images = static::fetchImages(static::$config['login']['phases']['k']);
+        $selectedImages = $this->getRemainingUserImages($userImages);
+        $images = ImageFactory::fetch($this->config['login']['phases']['k']);
         $_SESSION['login']['generated'] = array_merge($_SESSION['login']['generated'], $selectedImages);
 
         // NOTE: if in a previous phase the user failed -> just use randomized content.
         if (!$_SESSION['login']['error']) {
-            static::randomizeUserImages($images, $userImages);
+            $this->randomizeUserImages($images, $userImages);
         }
 
         return $images;
     }
 
-    private static function initUser($email, $db = null) {
+    private function initUser($email, $db = null) {
         if ($db == null) {
             $db = new QuickDb();
         }
 
         $_SESSION['user'] = $db->getUser($email);
-         // NOTE: add other user info here as well.
-    }
-
-    private static function fetchImages($count) {
-        $factory = ImageFactory::create();
-        return $factory->fetch($count);
+         // NOTE: add other user info here as well. Maybe create a real Dataclass.
     }
 }

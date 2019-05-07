@@ -2,6 +2,9 @@
 
 require_once __DIR__ . '/../vendor/autoload.php';
 
+(new pictogin\Pictogin())->run();
+
+/*
 use pictogin\controllers\UserController;
 use Slim\App;
 use Slim\Http\Environment;
@@ -59,3 +62,4 @@ UserController::register($app, $config);
 
 // Run app
 $app->run(); // TODO: might throw exceptions
+*/

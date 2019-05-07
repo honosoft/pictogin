@@ -72,7 +72,7 @@ class MailClient {
      */
     public function template(string $templateName, array $params = []) : MailClient {
         /** @var \Slim\Views\Twig $twig */
-        global $app;
+        $app = Pictogin::app(); // NOTE: not sure it should be static... maybe create a local twig instead.
         $twig = $app->getContainer()['view'];
         $this->message = $twig->fetch($templateName, $params);
         return $this;
